@@ -1,73 +1,92 @@
 <?php
 
-$id = $_GET['id'] ?? die("Missing ID");
+$id = @$_GET['id'];
 $user_ip = $_SERVER['REMOTE_ADDR'];
+$currentTimestamp = time();
 
-$portal = "tatatv.cc";
+$portal = "tatatv.cc/";
 $mac = "00:1A:79:00:2B:A7";
-$serial = "A44FE126E0250";
+
 $deviceid = "AEE189124634425D24481DEDFBFF7C73F6EB2B89163EE3144B5EB85144812EB8";
+$deviceid2 = "AEE189124634425D24481DEDFBFF7C73F6EB2B89163EE3144B5EB85144812EB8";
+
+$serial = "A44FE126E0250";
+$sig = "";
 
 // =====================
 // 🔐 HANDSHAKE
 // =====================
-$n1 = "http://$portal/stalker_portal/server/load.php?type=stb&action=handshake&JsHttpRequest=1-xml";
+$n1 = "http://$portal/stalker_portal/server/load.php?type=stb&action=handshake&prehash=false&JsHttpRequest=1-xml";
 
-$headers = [
+$h1 = [
     "Cookie: mac=$mac; stb_lang=en; timezone=GMT",
     "X-Forwarded-For: $user_ip",
-    "User-Agent: Mozilla/5.0 (QtEmbedded; Linux) MAG200",
+    "Referer: http://$portal/stalker_portal/c/",
+    "User-Agent: Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
+    "X-User-Agent: Model: MAG250; Link:",
 ];
 
-$res1 = curl($n1, $headers);
-$data1 = json_decode($res1, true);
+$c1_curl = curl_init();
+curl_setopt($c1_curl, CURLOPT_URL, $n1);
+curl_setopt($c1_curl, CURLOPT_SSL_VERIFYHOST, false);
+curl_setopt($c1_curl, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($c1_curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($c1_curl, CURLOPT_HTTPHEADER, $h1);
+curl_setopt($c1_curl, CURLOPT_USERAGENT, $h1[3]);
 
-if (!$data1 || !isset($data1['js']['token'])) {
-    die("Handshake failed: " . $res1);
-}
+$res1 = curl_exec($c1_curl);
+curl_close($c1_curl);
 
-$token = $data1['js']['token'];
+$response = json_decode($res1, true);
+$token = $response['js']['random'];
+$real  = $response['js']['token'];
 
 // =====================
 // 👤 PROFILE
 // =====================
-$n2 = "http://$portal/stalker_portal/server/load.php?type=stb&action=get_profile&JsHttpRequest=1-xml";
+$h2 = [
+    "Cookie: mac=$mac; stb_lang=en; timezone=GMT",
+    "X-Forwarded-For: $user_ip",
+    "Authorization: Bearer EC5897889BE161532C08D180A24B3707",
+    "Referer: http://$portal/stalker_portal/c/",
+    "User-Agent: Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
+    "X-User-Agent: Model: MAG250; Link:",
+];
 
-$headers[] = "Authorization: Bearer $token";
+$n2 = "stalker_portal/server/load.php?type=stb&action=get_profile&hd=1&ver=ImageDescription%3A%200.2.18-r14-pub-250%3B%20ImageDate%3A%20Fri%20Jan%2015%2015%3A20%3A44%20EET%202016%3B%20PORTAL%20version%3A%205.1.0%3B%20API%20Version%3A%20JS%20API%20version%3A%20328%3B%20STB%20API%20version%3A%20134%3B%20Player%20Engine%20version%3A%200x566&num_banks=2&sn=A44FE126E0250&stb_type=MAG270&image_version=218&video_out=hdmi&device_id=AEE189124634425D24481DEDFBFF7C73F6EB2B89163EE3144B5EB85144812EB8B&device_id2=AEE189124634425D24481DEDFBFF7C73F6EB2B89163EE3144B5EB85144812EB8&signature=&auth_second_step=1&hw_version=1.7-BD-00¬_valid_token=0&client_type=STB&hw_version_2=7ec5a49802e4a011344ed3049250f50d×tamp=1746163583&api_signature=263&metrics={\"mac\":\"$mac\",\"sn\":\"$serial\",\"model\":\"MAG254\",\"type\":\"STB\",\"uid\":\"$deviceid\",\"random\":\"$token\"}&JsHttpRequest=1-xml";
 
-$res2 = curl($n2, $headers);
+$c2_curl = curl_init();
+curl_setopt($c2_curl, CURLOPT_URL, $n2);
+curl_setopt($c2_curl, CURLOPT_SSL_VERIFYHOST, false);
+curl_setopt($c2_curl, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($c2_curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($c2_curl, CURLOPT_HTTPHEADER, $h2);
+curl_setopt($c2_curl, CURLOPT_USERAGENT, $h2[4]);
+
+$res2 = curl_exec($c2_curl);
+curl_close($c2_curl);
 
 // =====================
 // 📺 CREATE LINK
 // =====================
-$n3 = "http://$portal/stalker_portal/server/load.php?type=itv&action=create_link&cmd=ffrt%20http://localhost/ch/$id&JsHttpRequest=1-xml";
+$n3 = "http://$portal/stalker_portal/server/load.php?type=itv&action=create_link&cmd=ffrt%http://localhost/ch/$id&JsHttpRequest=1-xml";
 
-$res3 = curl($n3, $headers);
-$data3 = json_decode($res3, true);
+$c3_curl = curl_init();
+curl_setopt($c3_curl, CURLOPT_URL, $n3);
+curl_setopt($c3_curl, CURLOPT_SSL_VERIFYHOST, false);
+curl_setopt($c3_curl, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($c3_curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($c3_curl, CURLOPT_HTTPHEADER, $h2);
+curl_setopt($c3_curl, CURLOPT_USERAGENT, $h2[4]);
 
-if (!$data3 || !isset($data3['js']['cmd'])) {
-    die("Stream failed: " . $res3);
-}
+$res3 = curl_exec($c3_curl);
+curl_close($c3_curl);
 
-$stream = $data3['js']['cmd'];
+$i6 = json_decode($res3, true);
+$d7 = $i6["js"]["cmd"];
 
 // =====================
 // 🔁 REDIRECT
 // =====================
-header("Location: $stream");
-exit;
-
-
-// =====================
-// 🔧 CURL FUNCTION
-// =====================
-function curl($url, $headers) {
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => $headers,
-        CURLOPT_SSL_VERIFYHOST => false,
-        CURLOPT_SSL_VERIFYPEER => false,
-    ]);
-    return curl_exec($ch);
-}
+header("Location: " . $d7);
+die;
